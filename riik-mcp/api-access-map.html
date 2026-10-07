@@ -1,0 +1,374 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eesti.ee API Access Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a small field of 46 tiles (one per endpoint), coloured by live/needs-params/unresolved; legend + findings beside/below; a category breakdown below that; Browse is a second tab. Mirrors the sibling Estonian Open Data Atlas's token system for a future merge. */
+:root{
+  --paper:#eef2f1; --surface:#ffffff; --ink:#0f1d24; --muted:#566a72; --line:#d3dcdc; --accent:#0072ce; --accent-soft:#dbe9f6;
+  --ok:#1f9a8a; --ok-soft:#dcf0ec; --warn:#e09a0c; --warn-soft:#faecd2; --bad:#d9534f; --bad-soft:#fae0df;
+  --wip:#8a3aa3; --wip-soft:#f1def5;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
+  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --wip:#d9a6e6; --wip-soft:#3a2440; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
+  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --wip:#d9a6e6; --wip-soft:#3a2440; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:16px/1.55 var(--font-body);padding-inline:20px;padding-block:0 64px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding-block:36px 8px}
+.brand{display:flex;flex-direction:column;gap:10px;min-width:0}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font:800 clamp(34px,6.4vw,72px)/.95 var(--font-display);letter-spacing:-.035em;margin:0;text-wrap:balance;font-variation-settings:"opsz" 96}
+.xlink{flex-shrink:0;font:500 13px var(--font-mono);color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:7px 14px;white-space:nowrap;transition:border-color .15s var(--ease),color .15s var(--ease)}
+.xlink:hover{color:var(--ink);border-color:var(--ink)}
+.wip{font:700 12.5px var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--wip);background:var(--wip-soft);border-radius:999px;padding:5px 16px}
+.lede{color:var(--muted);max-width:60ch;margin:0;font-size:17px}
+.lede strong{color:var(--ink);font-weight:600}
+
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--paper);display:flex;gap:28px;border-bottom:1px solid var(--line);margin-block:26px 30px;padding-top:8px}
+nav.tabs button{position:relative;font:600 16px var(--font-body);color:var(--muted);background:none;border:0;padding:10px 0 12px;cursor:pointer;transition:color .2s}
+nav.tabs button[aria-selected="true"]{color:var(--ink)}
+nav.tabs .ink{position:absolute;bottom:-1px;height:2px;background:var(--ink);border-radius:2px;transition:left .35s var(--ease),width .35s var(--ease)}
+nav.tabs .badge{font:500 13px var(--font-body);color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+
+h2{font:700 clamp(22px,2.6vw,28px)/1.15 var(--font-display);letter-spacing:-.015em;margin:0;text-wrap:balance}
+.hint{color:var(--muted);margin:0;max-width:64ch;font-size:15px}
+.block{display:flex;flex-direction:column;gap:16px;margin-bottom:56px}
+
+.atlas{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.fieldwrap{position:relative;min-width:0}
+.field{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;max-width:460px}
+.field .t{aspect-ratio:1;border:0;border-radius:5px;padding:0;cursor:pointer;transition:transform .15s var(--ease),box-shadow .15s;animation:tileIn .32s var(--ease) both}
+.field .t:hover{transform:scale(1.08)}
+.field .t.dim{opacity:.22}
+.field .t.on{box-shadow:0 0 0 2px var(--ink)}
+@keyframes tileIn{from{opacity:0;transform:scale(.4)}}
+@media (prefers-reduced-motion:reduce){.field .t{animation:none}}
+
+.tip{position:fixed;left:0;top:0;pointer-events:none;background:var(--ink);color:var(--paper);padding:9px 11px;border-radius:8px;font-size:13px;line-height:1.35;max-width:300px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s var(--ease);z-index:3;box-shadow:0 8px 24px rgba(10,20,25,.18)}
+.tip.on{opacity:1;transform:none}
+.tip b{display:block;font-weight:600;margin-bottom:2px;font-family:var(--font-mono);font-size:12.5px}
+.tip span{opacity:.75}
+.tip.pin{pointer-events:auto;width:min(420px,calc(100vw - 24px));max-width:none;padding:16px 18px 14px;font-size:13.5px;border-radius:14px;z-index:30;box-shadow:0 18px 50px rgba(10,20,25,.34);transition:none;animation:cardIn .4s cubic-bezier(.2,1.25,.35,1) both}
+.tip.pin.out{animation:cardOut .18s ease-in both;pointer-events:none}
+@keyframes cardIn{0%{opacity:0;transform:scale(.6) translateY(6px)}60%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes cardOut{to{opacity:0;transform:scale(.92) translateY(4px)}}
+.tip.pin b{font-size:15px;line-height:1.3;margin:6px 0 2px;font-family:var(--font-mono);overflow-wrap:anywhere}
+.tip .tmeta{display:flex;align-items:center;gap:8px;opacity:.85;font-size:12.5px;padding-right:22px}
+.tip .tmeta i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.tip .path{font-family:var(--font-mono);font-size:12.5px;opacity:.75;margin-bottom:6px;overflow-wrap:anywhere}
+.tip .note{opacity:.85;margin-top:4px}
+.tip .tx{position:absolute;top:10px;right:10px;width:28px;height:28px;z-index:2;transition:transform .2s cubic-bezier(.3,1.6,.4,1),background .15s;border:0;border-radius:6px;background:transparent;color:var(--paper);opacity:.7;cursor:pointer;font-size:18px;line-height:1}
+.tip .tx:hover{opacity:1;background:rgba(255,255,255,.14);transform:rotate(90deg)}
+
+.legend{display:flex;flex-direction:column;gap:2px}
+.lg{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;font:inherit;font-size:15px;color:var(--ink);background:none;border:0;border-radius:8px;padding:7px 10px;cursor:pointer;text-align:left;transition:background .2s,opacity .25s}
+.lg:hover{background:var(--surface)}
+.lg[aria-pressed="true"]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.legend.focused .lg[aria-pressed="false"]:not(.lg-all){opacity:.45}
+.lg-all{font-weight:600;border-bottom:1px solid var(--line);border-radius:8px 8px 0 0;margin-bottom:4px;padding-bottom:10px}
+.lg-all .n{color:var(--ink);font-weight:600}
+.sw-all{background:conic-gradient(var(--ok) 0 70%,var(--warn) 0 96%,var(--bad) 0)}
+.sw{width:14px;height:14px;border-radius:3px;transition:transform .25s var(--ease);flex:none}
+.lg:hover .sw{transform:scale(1.18) rotate(-6deg)}
+.lg .n{font:500 15px var(--font-body);font-variant-numeric:tabular-nums;color:var(--muted)}
+.lg[aria-pressed="true"] .n{color:var(--ink)}
+.go{margin-top:10px;align-self:flex-start;font:600 15px var(--font-body);color:var(--paper);background:var(--ink);border:0;border-radius:999px;padding:10px 18px;cursor:pointer;transition:transform .15s var(--ease)}
+.go:active{transform:scale(.97)}
+
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:28px 36px}
+.finding .big{font:800 clamp(40px,5vw,56px)/1 var(--font-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;font-variation-settings:"opsz" 96}
+.finding .big small{font-size:.45em;font-weight:700;letter-spacing:-.01em;margin-left:4px}
+.finding p{margin:8px 0 0;color:var(--muted);font-size:15px;max-width:34ch}
+.finding p strong{color:var(--ink);font-weight:600}
+
+.cats{display:flex;flex-direction:column}
+.cr{display:grid;grid-template-columns:minmax(0,220px) 46px minmax(0,1fr);gap:16px;align-items:center;padding:9px 6px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:background .2s}
+.cr:hover{background:var(--surface)}
+.cr .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr .c{font-variant-numeric:tabular-nums;text-align:right;color:var(--muted)}
+.cr .mix{display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--line)}
+.cr .mix span{height:100%;transition:filter .2s}
+.cr:hover .mix span{filter:saturate(1.2) brightness(1.05)}
+
+.filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) auto;gap:12px;align-items:end}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld label,.flabel{font:500 14px var(--font-body);color:var(--muted)}
+input[type=search],select{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;transition:border-color .2s,box-shadow .2s}
+input[type=search]:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:500 14px var(--font-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px 7px 10px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:transform .14s var(--ease),border-color .2s,background .2s,color .2s}
+.chip:hover{border-color:var(--muted)}
+.chip:active{transform:scale(.95)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip .dot{width:10px;height:10px;border-radius:3px}
+.chip .c{font-variant-numeric:tabular-nums;opacity:.6;font-size:13px}
+.bar{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+.count{font:700 22px var(--font-display);letter-spacing:-.01em}
+.count span{font-variant-numeric:tabular-nums}
+.linkbtn{font:500 15px var(--font-body);background:none;border:0;color:var(--accent);cursor:pointer;padding:0}
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:14px minmax(0,1fr);gap:14px;padding:16px 4px;border-bottom:1px solid var(--line)}
+.row.in{animation:rise .35s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+.row .sw{margin-top:5px}
+.row .ttl{font-weight:600;font-family:var(--font-mono);font-size:15px}
+.row .path{color:var(--muted);font-size:13.5px;font-family:var(--font-mono);overflow-wrap:anywhere;margin-top:3px}
+.row .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:14px;color:var(--muted);margin-top:8px;align-items:center}
+.row .meta .cat{color:var(--ink);font-weight:500}
+.st{font-weight:600;border-radius:999px;padding:2px 10px;font-size:12.5px}
+.st-ok{color:var(--ok);background:var(--ok-soft)}
+.st-warn{color:var(--warn);background:var(--warn-soft)}
+.st-bad{color:var(--bad);background:var(--bad-soft)}
+.row .note{color:var(--muted);font-size:14px;margin-top:6px}
+.empty{padding:36px 4px;color:var(--muted)}
+footer{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;max-width:78ch;display:flex;flex-direction:column;gap:8px}
+
+@media (max-width:900px){.atlas{grid-template-columns:1fr}.field{max-width:none}.legend{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}}
+@media (max-width:720px){
+  .filters{grid-template-columns:1fr}
+  .cr{grid-template-columns:minmax(0,1fr) 40px;gap:6px 12px}
+  .cr .mix{grid-column:1/-1}
+  .top{flex-direction:column-reverse}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="title-row">
+        <h1>eesti.ee API Access Map</h1>
+        <span class="wip">API harvest in progress</span>
+      </div>
+      <p class="lede">All <strong>46 personal-data endpoints</strong> behind Estonia's state portal API gateway, one tile each, <strong>coloured by whether they work out of the box</strong> for a read-only client authenticated with Smart-ID.</p>
+    </div>
+    <a class="xlink" href="atlas.html">Estonian Open Data Atlas →</a>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-overview" aria-selected="true" aria-controls="p-overview">Overview</button>
+    <button role="tab" id="tab-browse" aria-selected="false" aria-controls="p-browse">Browse<span class="badge" id="tabcount"></span></button>
+    <span class="ink" id="tabink"></span>
+  </nav>
+
+  <main>
+    <div id="p-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <section class="block">
+        <div class="atlas">
+          <div class="fieldwrap" id="fieldwrap">
+            <div class="field" id="field" role="img" aria-label="All 46 endpoints as tiles, coloured by status"></div>
+            <div class="tip" id="tip"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;min-width:0">
+            <div class="legend" id="legend"></div>
+            <button class="go" id="go" hidden></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2>What the tiles say</h2>
+        <div class="findings" id="findings"></div>
+      </section>
+
+      <section class="block">
+        <div style="display:flex;flex-direction:column;gap:6px"><h2>By category</h2><p class="hint">The 13 data domains this account's token can reach, and how many of each category's endpoints work today. Select one to browse it.</p></div>
+        <div class="cats" id="cats"></div>
+      </section>
+    </div>
+
+    <div id="p-browse" role="tabpanel" aria-labelledby="tab-browse" hidden>
+      <section class="block">
+        <div class="filters">
+          <div class="fld"><label for="q">Search</label><input type="search" id="q" placeholder="vehicles, kinnistud, pension, debt" autocomplete="off"></div>
+          <div class="fld"><label for="cat">Category</label><select id="cat"></select></div>
+        </div>
+        <div class="fld"><span class="flabel">Status</span><div class="chips" id="chips"></div></div>
+        <div class="bar"><div class="count"><span id="nres">0</span> endpoints</div><button class="linkbtn" id="reset">Clear filters</button></div>
+        <div class="list" id="list"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <span>Source: <strong>riik-mcp</strong>, a personal CLI + Claude MCP plugin reading my own eesti.ee / ee.ria.eesti.app account data via Smart-ID. Own account only, read-only, 46 GET endpoints — no mutations, no acting for someone else, no business-portal area.</span>
+    <span>Live-verified 2026-10-06 against a real Smart-ID login. <strong>Live</strong>: returns real data as documented. <strong>Needs params</strong>: confirmed reachable, but expects query parameters (a date range, a case reference, a code list) this minimal client deliberately doesn't send. <strong>Unresolved</strong>: no working path or method found (e‑certificates 404s; qr‑documents 405s on GET).</span>
+  </footer>
+</div>
+
+<script id="data" type="application/json">{"status":["Live","Needs params","Unresolved"],"cats":["Session/misc","Consent","Health","Vehicles/driving","Land/real estate","Pensions (KPR)","Inheritance/notary","Firearms/hunting","Education","Debt/enforcement","Identity documents/photo","Mailbox (pk2)","QR document display"],"rows":[[0,0,"profile","/authenticator/token/v1/userinfo",""],[0,0,"supported-version","/api/app/v1/supported-version",""],[0,0,"data-systems","/api/andmejalgija/v1/data-systems",""],[1,0,"data-usages","/api/andmejalgija/v1/usages","needs dataSystemCodes"],[1,1,"consent","/api/consent/v1/consent-snapshot","needs statuses"],[1,1,"consent-requests","/api/consent/v1/consent-request","needs consentGroupReference"],[0,1,"consent-children","/api/consent/v1/children",""],[0,2,"health-info","/api/haigekassa/v1/kodanik/info",""],[0,2,"health-account","/api/haigekassa/v1/kodanik/konto",""],[1,2,"prescriptions","/api/haigekassa/v1/kodanik/retseptide_loetelu","needs search criteria"],[0,2,"health-insurances","/api/haigekassa/v1/kodanik/kindlustused_loetelu","empty body if none"],[0,2,"ehic-cards","/api/haigekassa/v1/kodanik/euroopa_ravikindlustuskaart_loetelu",""],[0,2,"dental-benefit-balance","/api/haigekassa/v1/kodanik/hambaravi_jaak",""],[0,2,"denture-benefit-balance","/api/haigekassa/v1/kodanik/proteesiravi_jaak",""],[1,2,"sick-leave-certificates","/api/haigekassa/v1/kodanik/tvl_loetelu","needs search criteria"],[0,2,"health-certificates","/api/digilugu/v1/kodanik/tervisetoendid",""],[0,2,"incapacity-certificate","/api/v1/tkis/kodanik/tvhtoend",""],[0,3,"driving-licences","/api/liiklusregister/v1/kodanik/juhilubade_loetelu",""],[0,3,"vehicles","/api/liiklusregister/v1/kodanik/soidukite_loetelu","no VIN field"],[0,3,"watercraft","/api/liiklusregister/v1/kodanik/veesoidukite_loetelu",""],[0,3,"uninsured-vehicles","/api/lkf/v1/kodanik/lepinguta_soidukid","empty body if none"],[1,4,"properties","/api/kinnistusraamat/v1/kodanik/kinnistud_loetelu","needs search criteria"],[1,4,"land-registry-applications","/api/kinnistusraamat/v1/kodanik/kinnistamisavaldused_loetelu","needs search criteria"],[1,4,"affected-party-notices","/api/kinnistusraamat/v1/kodanik/puudutatud_isiku_teated","needs search criteria"],[0,5,"pension-account","/api/kpr/v1/kodanik/kogumispension",""],[0,5,"pension-applications","/api/kpr/v1/kodanik/kogumispensioni_avaldused",""],[0,5,"pension-statement-pillar2","/api/kpr/v1/kodanik/pensionikonto_seis_2_sammas",""],[1,5,"pension-transactions","/api/kpr/v1/kodanik/tehingute_ulevaade","needs search criteria"],[0,6,"inheritance-register-data","/api/parimisregister/v1/kodanik/minu_parimisregistri_andmed",""],[0,6,"notary-transactions","/api/notar/v2/kodanik/tehingute_loetelu",""],[1,7,"weapons","/api/relvaregister/v1/kodanik/relvade_loetelu","needs search criteria"],[1,7,"weapon-permits","/api/relvaregister/v1/kodanik/relvalubade_loetelu","needs search criteria"],[0,8,"education-info","/api/ehis/v1/kodanik/info",""],[0,8,"graduation-certificate","/api/ehis/v1/kodanik/loputunnistus",""],[2,8,"e-certificates","/api/eis/v1/kodanik/e_tunnistus","404s live, path unresolved"],[0,8,"language-exam-data","/api/eis/v1/kodanik/eesti_keele_tasemeeksami_andmed",""],[0,8,"citizenship-exam-data","/api/eis/v1/kodanik/kodakondsuseksamid",""],[0,8,"exam-sessions","/api/eis/v1/kodanik/test_sessioonid",""],[1,9,"child-support-debt","/api/tarn/v1/kodanik/elatisvolgnevus","needs personalCode/name/DOB"],[0,9,"enforcement-case-files","/api/tarn/v1/kodanik/toimikud",""],[0,10,"id-photo","/api/politsei_ja_piirivalveamet/v1/kodanik/pilt","base64 JPEG"],[0,10,"documents-list","/api/politsei_ja_piirivalveamet/v2/kodanik/dokumendite_loetelu",""],[0,11,"mailbox-notifications","/api/pk2/v1/notification/list",""],[0,11,"mailbox-contacts","/api/pk2/v1/contacts",""],[0,11,"mailbox-owners","/api/pk2/v2/owners",""],[2,12,"qr-documents","/api/qr/v1/documents","405 live, GET unsupported"]]}</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent);
+const STATUS=D.status,CATS=D.cats,R=D.rows,total=R.length;
+const NOTE=[
+  "Returns real data today with just a bearer token — no extra wiring needed.",
+  "Confirmed reachable, but the service expects query parameters (a date range, a case reference, a code list) this read-only client doesn't send. Out of scope by design, not a bug.",
+  "No working path or method was ever found for this one, despite trying documented and inferred variants."
+];
+const fmtN=n=>n.toLocaleString('en-US');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const statusCount=STATUS.map((_,i)=>R.filter(r=>r[0]===i).length);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let COL=[];
+function readColors(){const cs=getComputedStyle(document.documentElement);COL=['--ok','--warn','--bad'].map(v=>cs.getPropertyValue(v).trim())}
+readColors();
+const cvar=i=>`var(${['--ok','--warn','--bad'][i]})`;
+const STCLS=['st-ok','st-warn','st-bad'];
+
+/* field */
+const order=R.map((r,i)=>i).sort((a,b)=>R[a][0]-R[b][0]||R[a][1]-R[b][1]||R[a][2].localeCompare(R[b][2]));
+const fieldEl=document.getElementById('field');
+let focusStatus=-1,pinIdx=-1;
+order.forEach((i,k)=>{
+  const r=R[i],b=document.createElement('button');
+  b.className='t';b.type='button';b.dataset.i=i;b.style.background=cvar(r[0]);
+  b.style.animationDelay=(k*14)+'ms';
+  b.setAttribute('aria-label',`${r[2]}, ${STATUS[r[0]]}`);
+  fieldEl.appendChild(b);
+});
+const tiles=[...fieldEl.children];
+
+const tip=document.getElementById('tip');
+function placeTip(cx,cy){const w=tip.offsetWidth,h=tip.offsetHeight,vw=innerWidth,vh=innerHeight;
+  let x=cx+14,y=cy+16;if(x+w>vw-8)x=Math.max(8,cx-w-14);if(y+h>vh-8)y=Math.max(8,cy-h-12);
+  tip.style.left=x+'px';tip.style.top=y+'px'}
+let pinned=false;
+function cardHTML(r){
+  return `<button type="button" class="tx" aria-label="Close">×</button><div class="tmeta"><i style="background:${cvar(r[0])}"></i>${STATUS[r[0]]} · ${esc(CATS[r[1]])}</div><b>${esc(r[2])}</b><div class="path">${esc(r[3])}</div>${r[4]?`<div class="note">${esc(r[4])}</div>`:''}`;
+}
+function unpin(){if(!pinned)return;pinned=false;
+  if(pinIdx>=0)tiles[order.indexOf(pinIdx)].classList.remove('on');pinIdx=-1;
+  tip.classList.add('out');
+  setTimeout(()=>{if(!pinned)tip.classList.remove('on','pin','out')},reduce?0:180);
+}
+tip.addEventListener('pointerdown',e=>{if(e.target.closest('.tx')){e.preventDefault();e.stopPropagation();unpin()}});
+tip.addEventListener('click',e=>{e.stopPropagation();if(e.target.closest('.tx'))unpin()});
+tiles.forEach(b=>{
+  const i=+b.dataset.i,r=R[i];
+  b.addEventListener('pointerenter',ev=>{
+    if(pinned)return;
+    tip.innerHTML=`<b>${esc(r[2])}</b><span>${esc(CATS[r[1]])} · ${STATUS[r[0]]}</span>`;
+    tip.classList.add('on');placeTip(ev.clientX,ev.clientY);
+  });
+  b.addEventListener('pointermove',ev=>{if(!pinned)placeTip(ev.clientX,ev.clientY)});
+  b.addEventListener('pointerleave',()=>{if(!pinned)tip.classList.remove('on')});
+  b.addEventListener('click',ev=>{
+    if(pinIdx>=0)tiles[order.indexOf(pinIdx)].classList.remove('on');
+    pinIdx=i;pinned=true;b.classList.add('on');
+    tip.classList.remove('pin','out');void tip.offsetWidth;
+    tip.innerHTML=cardHTML(r);
+    tip.classList.add('on','pin');placeTip(ev.clientX,ev.clientY);
+  });
+});
+document.addEventListener('click',e=>{if(pinned&&!tip.contains(e.target)&&!e.target.closest('.t'))unpin()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&pinned)unpin()});
+addEventListener('scroll',()=>{if(pinned)unpin()},{passive:true});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);
+new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function setFocus(t){
+  focusStatus=t;
+  tiles.forEach(b=>{const i=+b.dataset.i;b.classList.toggle('dim',t>=0&&R[i][0]!==t)});
+  document.querySelectorAll('.lg').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.t===t?'true':'false'));
+  document.getElementById('legend').classList.toggle('focused',t>=0);
+  const go=document.getElementById('go');
+  if(t>=0){go.hidden=false;go.textContent=`Browse ${fmtN(statusCount[t])} ${statusCount[t]===1?'endpoint':'endpoints'}`;go.onclick=()=>goStatus(t)}else go.hidden=true;
+}
+
+/* legend */
+const legend=document.getElementById('legend');
+{const b=document.createElement('button');b.className='lg lg-all';b.innerHTML=`<span class="sw sw-all" aria-hidden="true"></span><span>All endpoints</span><span class="n" data-n="${total}">0</span>`;b.title='Show all tiles';b.onclick=()=>setFocus(-1);legend.appendChild(b)}
+STATUS.forEach((s,t)=>{const b=document.createElement('button');b.className='lg';b.dataset.t=t;b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<span class="sw" style="background:${cvar(t)}"></span><span>${s}</span><span class="n" data-n="${statusCount[t]}">0</span>`;
+  b.onclick=()=>setFocus(focusStatus===t?-1:t);
+  legend.appendChild(b)});
+function countUp(){const els=[...document.querySelectorAll('[data-n]')];const t0=performance.now(),dur=reduce?0:1000;
+  (function step(now){const p=dur?Math.min(1,Math.max(0,(now-t0)/dur)):1,e=1-Math.pow(1-p,4);els.forEach(el=>{el.textContent=fmtN(Math.round(+el.dataset.n*e))});if(p<1)requestAnimationFrame(step)})(t0)}
+
+/* findings */
+const pct=n=>Math.round(n/total*100);
+document.getElementById('findings').innerHTML=[
+  [statusCount[0],'',`<strong>live</strong> today — real data back from one GET with a bearer token, ${pct(statusCount[0])}% of the surface.`],
+  [statusCount[1],'',`more are <strong>reachable but parameterised</strong>: they 400 without a date range, case reference or code list this read-only client doesn't send.`],
+  [statusCount[2],'',`couldn't be <strong>resolved</strong> at all: e‑certificates 404s, qr‑documents 405s on GET.`],
+  [CATS.length,'',`<strong>categories</strong>, from health and vehicles to pensions, inheritance, firearms and QR document display.`]
+].map(([n,s,p])=>`<div class="finding"><div class="big"><span data-n="${n}">0</span>${s?`<small>${s}</small>`:''}</div><p>${p}</p></div>`).join('');
+
+/* categories */
+const catRows=CATS.map((_,i)=>R.filter(r=>r[1]===i));
+const catsEl=document.getElementById('cats');
+const catOrder=CATS.map((c,i)=>[c,i,catRows[i].length]).sort((a,b)=>b[2]-a[2]);
+catsEl.innerHTML=catOrder.map(([c,i,n])=>`<button class="cr" data-c="${i}"><span class="nm">${esc(c)}</span><span class="c">${n}</span><span class="mix">${STATUS.map((_,t)=>{const k=catRows[i].filter(r=>r[0]===t).length;return k?`<span style="width:${k/n*100}%;background:${cvar(t)}" title="${STATUS[t]}: ${k}"></span>`:''}).join('')}</span></button>`).join('');
+catsEl.addEventListener('click',e=>{const b=e.target.closest('.cr');if(b){resetFilters();state.cat=+b.dataset.c;sync();show('browse')}});
+
+/* browse */
+const state={q:'',cat:-1,statuses:new Set()};
+const catSel=document.getElementById('cat');
+catSel.innerHTML='<option value="-1">All categories</option>'+CATS.map((c,i)=>[c,i]).map(([c,i])=>`<option value="${i}">${esc(c)} (${catRows[i].length})</option>`).join('');
+const chips=document.getElementById('chips');
+STATUS.forEach((s,t)=>{const b=document.createElement('button');b.className='chip';b.dataset.t=t;b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<span class="dot" style="background:${cvar(t)}"></span>${s}<span class="c">${fmtN(statusCount[t])}</span>`;
+  b.onclick=()=>{state.statuses.has(t)?state.statuses.delete(t):state.statuses.add(t);sync()};chips.appendChild(b)});
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const IDX=R.map(r=>norm(r[2]+' '+r[3]+' '+r[4]+' '+CATS[r[1]]));
+function filtered(){
+  const terms=norm(state.q.trim()).split(/\s+/).filter(Boolean);const out=[];
+  for(let k=0;k<R.length;k++){const r=R[k];
+    if(state.statuses.size&&!state.statuses.has(r[0]))continue;
+    if(state.cat>=0&&r[1]!==state.cat)continue;
+    if(terms.length&&!terms.every(t=>IDX[k].includes(t)))continue;
+    out.push(r)}
+  out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2].localeCompare(b[2]));
+  return out;
+}
+function rowHTML(r,k){
+  return `<div class="row in" style="animation-delay:${Math.min(k,20)*18}ms"><span class="sw" style="background:${cvar(r[0])}"></span><div style="min-width:0"><div class="ttl">${esc(r[2])}</div><div class="path">${esc(r[3])}</div><div class="meta"><span class="cat">${esc(CATS[r[1]])}</span><span class="st ${STCLS[r[0]]}">${STATUS[r[0]]}</span></div>${r[4]?`<div class="note">${esc(r[4])}</div>`:''}</div></div>`;
+}
+let current=[];
+function render(){
+  current=filtered();
+  document.getElementById('nres').textContent=fmtN(current.length);
+  document.getElementById('tabcount').textContent=fmtN(current.length);
+  const list=document.getElementById('list');
+  list.innerHTML=current.length?current.map(rowHTML).join(''):'<div class="empty">No endpoints match these filters. Shorten the search or clear a filter.</div>';
+}
+function sync(){document.getElementById('q').value=state.q;catSel.value=String(state.cat);chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',state.statuses.has(+c.dataset.t)?'true':'false'));render()}
+function resetFilters(){state.q='';state.cat=-1;state.statuses.clear()}
+let tmr;document.getElementById('q').addEventListener('input',e=>{clearTimeout(tmr);tmr=setTimeout(()=>{state.q=e.target.value;render()},160)});
+catSel.onchange=e=>{state.cat=+e.target.value;render()};
+document.getElementById('reset').onclick=()=>{resetFilters();sync()};
+function goStatus(t){resetFilters();state.statuses.add(t);sync();show('browse')}
+
+/* tabs */
+const ink=document.getElementById('tabink');
+function placeInk(){const b=document.querySelector('nav.tabs button[aria-selected="true"]');ink.style.left=b.offsetLeft+'px';ink.style.width=b.offsetWidth+'px'}
+function show(name){
+  ['overview','browse'].forEach(n=>{document.getElementById('p-'+n).hidden=n!==name;document.getElementById('tab-'+n).setAttribute('aria-selected',n===name?'true':'false')});
+  placeInk();
+  const nav=document.querySelector('nav.tabs');if(window.scrollY>nav.offsetTop)window.scrollTo({top:nav.offsetTop-4,behavior:reduce?'auto':'smooth'});
+  try{history.replaceState(null,'','#'+name)}catch(e){}
+}
+document.getElementById('tab-overview').onclick=()=>show('overview');
+document.getElementById('tab-browse').onclick=()=>show('browse');
+addEventListener('resize',placeInk);
+sync();placeInk();countUp();
+if(document.fonts)document.fonts.ready.then(placeInk);
+if(location.hash==='#browse')show('browse');
+</script>

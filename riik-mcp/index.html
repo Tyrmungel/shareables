@@ -1,0 +1,211 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e-Estonia: Open data and API access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#eef2f1; --surface:#ffffff; --ink:#0f1d24; --muted:#566a72; --line:#d3dcdc; --accent:#0072ce; --accent-soft:#dbe9f6;
+  --ok:#1f9a8a; --ok-soft:#dcf0ec; --warn:#e09a0c; --warn-soft:#faecd2; --bad:#d9534f; --bad-soft:#fae0df;
+  --wip:#8a3aa3; --wip-soft:#f1def5;
+  --t0:#e09a0c; --t1:#1f9a8a; --t2:#3f9d5a; --t4:#3d6fb0; --t5:#b072b8; --t6:#a3afb4; --t8:#d9534f; --t10:#7cc4d8; --t11:#c97b2e;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
+  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --wip:#d9a6e6; --wip-soft:#3a2440;
+  --t0:#f5b83d; --t1:#34bfae; --t2:#5cc27a; --t4:#5b8fd6; --t5:#c48bd0; --t6:#5d6b71; --t8:#e5675f; --t10:#4f9db3; --t11:#d98f45; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
+  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --wip:#d9a6e6; --wip-soft:#3a2440;
+  --t0:#f5b83d; --t1:#34bfae; --t2:#5cc27a; --t4:#5b8fd6; --t5:#c48bd0; --t6:#5d6b71; --t8:#e5675f; --t10:#4f9db3; --t11:#d98f45; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--font-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:56px 20px 64px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+header.site{display:flex;flex-direction:column;gap:14px;margin-bottom:44px;animation:rise .56s var(--ease) both}
+h1{font:800 clamp(34px,6.4vw,72px)/.95 var(--font-display);letter-spacing:-.035em;margin:0;text-wrap:balance;font-variation-settings:"opsz" 96}
+.lede{color:var(--muted);max-width:66ch;margin:0;font-size:17px}
+.lede strong{color:var(--ink);font-weight:600}
+
+.cards{display:flex;gap:26px;flex-wrap:wrap;align-items:stretch}
+.card{flex:1 1 440px;min-width:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface);text-decoration:none;color:inherit;animation:rise .56s var(--ease) both;transition:border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease)}
+.card:nth-child(2){animation-delay:.08s}
+.card:hover,.card:focus-visible{border-color:var(--muted);transform:translateY(-3px);box-shadow:0 18px 40px rgba(15,29,36,.12)}
+
+.mosaic{position:relative;background:var(--paper);border-bottom:1px solid var(--line);padding:18px 20px}
+.mosaic canvas{display:block;width:100%;aspect-ratio:3.5/1;clip-path:inset(0 100% 0 0);animation:reveal .64s var(--ease) .18s both;cursor:crosshair}
+.field{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(4,1fr);gap:4px;aspect-ratio:3.5/1}
+.field .t{border-radius:3px;animation:tileIn .3s var(--ease) both;transition:transform .15s var(--ease);cursor:default}
+.field .t:hover{transform:scale(1.3);z-index:1}
+@keyframes tileIn{from{opacity:0;transform:scale(.4)}}
+@keyframes reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+
+.meta{padding:22px 24px 26px;display:flex;flex-direction:column;gap:10px;flex:1}
+.stat{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.stat:has(.wip){align-items:flex-start}
+.stat .n{font:800 clamp(40px,5.2vw,64px)/1 var(--font-display);letter-spacing:-.035em;font-variant-numeric:tabular-nums;font-variation-settings:"opsz" 96;color:var(--accent);text-box-trim:trim-both;text-box-edge:cap alphabetic}
+.stat-meta{display:flex;flex-direction:column;gap:5px}
+.stat .label{font:500 15px var(--font-body);color:var(--muted)}
+.meta h2{font:700 24px var(--font-display);margin:0;letter-spacing:-.01em}
+.wip{font:700 11px var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--wip);background:var(--wip-soft);border-radius:999px;padding:4px 14px;width:fit-content;text-box-trim:trim-both;text-box-edge:cap alphabetic}
+.meta p{color:var(--muted);margin:0;font-size:15px;line-height:1.5}
+.meta p strong{color:var(--ink);font-weight:600}
+.cta{margin-top:auto;padding-top:6px;display:flex;align-items:center;gap:6px;font:700 15px var(--font-body);color:var(--accent);letter-spacing:-.005em}
+.arrow{display:inline-block;transition:transform .2s var(--ease)}
+.card:hover .arrow,.card:focus-visible .arrow{transform:translateX(4px)}
+
+footer{margin-top:52px;color:var(--muted);font-size:13px;animation:rise .56s var(--ease) .16s both}
+footer a{color:var(--muted);text-decoration-color:var(--line)}
+footer a:hover{color:var(--ink)}
+
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.mosaic canvas{clip-path:none}}
+</style>
+
+<div class="wrap">
+  <header class="site">
+    <h1>e-Estonia: Open data and API access</h1>
+    <p class="lede">Two live research tools, not slideshows — every tile is colored by real, independently verified data. One maps the entire state open-data catalogue; the other maps one account's actual reach into the personal-data API behind eesti.ee. <strong>Pick a door.</strong></p>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="atlas.html">
+      <div class="mosaic"><canvas id="atlas-mosaic" aria-hidden="true" width="560" height="160"></canvas></div>
+      <div class="meta">
+        <div class="stat"><span class="n">8,515</span><div class="stat-meta"><span class="label">catalogue entries</span></div></div>
+        <h2>Estonian Open Data Atlas</h2>
+        <p>Every dataset and data service in andmed.eesti.ee, one tile per entry, colored by how a program actually reaches it. <strong>83.9% are a single generic statistics-table API.</strong></p>
+        <span class="cta">Open the atlas <span class="arrow">→</span></span>
+      </div>
+    </a>
+    <a class="card" href="api-access-map.html">
+      <div class="mosaic">
+        <div class="field" id="api-field" role="img" aria-label="46 endpoint tiles: 32 live, 12 need parameters, 2 unresolved"></div>
+      </div>
+      <div class="meta">
+        <div class="stat"><span class="n">46</span><div class="stat-meta"><span class="wip">API harvest in progress</span><span class="label">personal-data endpoints</span></div></div>
+        <h2>eesti.ee API Access Map</h2>
+        <p>Every endpoint behind the state portal's gateway, live-tested with a real Smart-ID login — <strong>32 return real data with nothing more than a bearer token.</strong></p>
+        <span class="cta">Open the map <span class="arrow">→</span></span>
+      </div>
+    </a>
+  </div>
+
+  <footer>Both read directly from the sites' own public interfaces — <a href="https://andmed.eesti.ee" target="_blank" rel="noopener">andmed.eesti.ee</a> and <a href="https://eesti.ee" target="_blank" rel="noopener">eesti.ee</a>.</footer>
+</div>
+
+<script>
+/* Real, verified counts: see estonian-open-data-atlas/README.md and the live-tested rows embedded in api-access-map.html. */
+const ATLAS = [
+  {c:7141, v:'--t4'},  // statistics table (PxWeb)
+  {c:233,  v:'--t1'},  // map service
+  {c:193,  v:'--t2'},  // file
+  {c:68,   v:'--t10'}, // download page
+  {c:61,   v:'--t11'}, // data feed
+  {c:31,   v:'--t0'},  // API (queryable)
+  {c:18,   v:'--t5'},  // PDF / Word
+  {c:693,  v:'--t6'},  // web page
+  {c:77,   v:'--t8'}   // no data link
+];
+const API_STATUS = [{c:32,v:'--ok'},{c:12,v:'--warn'},{c:2,v:'--bad'}];
+
+function apportion(items, cells){
+  const sum = items.reduce((a,x)=>a+x.c,0);
+  const remaining = cells - items.length; // reserve 1 cell per category
+  const shares = items.map(x=>(x.c/sum)*remaining);
+  const floors = shares.map(Math.floor);
+  const used = floors.reduce((a,b)=>a+b,0);
+  const order = shares.map((s,i)=>({i,r:s-Math.floor(s)})).sort((a,b)=>b.r-a.r);
+  for(let k=0;k<remaining-used;k++) floors[order[k].i]++;
+  return floors.map(f=>f+1);
+}
+
+let atlasGrid = null;
+
+function paintAtlas(){
+  const canvas = document.getElementById('atlas-mosaic');
+  const box = canvas.parentElement;
+  const cols = 56, rows = 16;
+  const dpr = Math.min(devicePixelRatio||1, 2);
+  const w = box.clientWidth - 40; // minus padding
+  const h = w/3.5;
+  canvas.width = Math.round(w*dpr);
+  canvas.height = Math.round(h*dpr);
+  canvas.style.width = w+'px';
+  canvas.style.height = h+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const cs = getComputedStyle(document.documentElement);
+  const counts = apportion(ATLAS, cols*rows);
+  const cellW = w/cols, cellH = h/rows, gap = 1.4;
+  const cats = new Array(cols*rows);
+  let cat = 0, left = counts[0];
+  for(let i=0;i<cols*rows;i++){
+    while(left<=0 && cat<counts.length-1){ cat++; left = counts[cat]; }
+    cats[i] = cat;
+    left--;
+  }
+  atlasGrid = {ctx, cols, rows, cellW, cellH, gap, cats, cs};
+  drawAtlasGrid();
+}
+
+function drawAtlasGrid(hover){
+  const {ctx, cols, rows, cellW, cellH, gap, cats, cs} = atlasGrid;
+  ctx.clearRect(0, 0, cols*cellW, rows*cellH);
+  for(let i=0;i<cols*rows;i++){
+    const col = i%cols, row = Math.floor(i/cols);
+    ctx.fillStyle = cs.getPropertyValue(ATLAS[cats[i]].v).trim();
+    ctx.fillRect(col*cellW+gap/2, row*cellH+gap/2, cellW-gap, cellH-gap);
+  }
+  if(hover!=null){
+    const col = hover%cols, row = Math.floor(hover/cols);
+    ctx.strokeStyle = cs.getPropertyValue('--ink').trim();
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(col*cellW+1, row*cellH+1, cellW-2, cellH-2);
+  }
+}
+
+function paintApi(){
+  const field = document.getElementById('api-field');
+  field.innerHTML = '';
+  const cs = getComputedStyle(document.documentElement);
+  let k = 0;
+  API_STATUS.forEach(s=>{
+    for(let i=0;i<s.c;i++){
+      const t = document.createElement('div');
+      t.className = 't';
+      t.style.background = cs.getPropertyValue(s.v).trim();
+      t.style.animationDelay = (k*12)+'ms';
+      field.appendChild(t);
+      k++;
+    }
+  });
+}
+
+paintAtlas();
+paintApi();
+new ResizeObserver(paintAtlas).observe(document.getElementById('atlas-mosaic').parentElement);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{paintAtlas();paintApi();});
+
+const atlasCanvas = document.getElementById('atlas-mosaic');
+atlasCanvas.addEventListener('mousemove', e=>{
+  if(!atlasGrid) return;
+  const rect = atlasCanvas.getBoundingClientRect();
+  const col = Math.floor((e.clientX-rect.left)/atlasGrid.cellW);
+  const row = Math.floor((e.clientY-rect.top)/atlasGrid.cellH);
+  if(col<0||col>=atlasGrid.cols||row<0||row>=atlasGrid.rows) return;
+  drawAtlasGrid(row*atlasGrid.cols+col);
+});
+atlasCanvas.addEventListener('mouseleave', ()=>drawAtlasGrid());
+</script>
