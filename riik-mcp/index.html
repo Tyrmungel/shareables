@@ -34,7 +34,9 @@ a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 
 header.site{display:flex;flex-direction:column;gap:14px;margin-bottom:44px;animation:rise .56s var(--ease) both}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 h1{font:800 clamp(34px,6.4vw,72px)/.95 var(--font-display);letter-spacing:-.035em;margin:0;text-wrap:balance;font-variation-settings:"opsz" 96}
+.updated{font:500 13px var(--font-mono);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 12px;white-space:nowrap}
 .lede{color:var(--muted);max-width:66ch;margin:0;font-size:17px}
 .lede strong{color:var(--ink);font-weight:600}
 
@@ -75,7 +77,10 @@ footer a:hover{color:var(--ink)}
 
 <div class="wrap">
   <header class="site">
-    <h1>e-Estonia: Open data and API access</h1>
+    <div class="title-row">
+      <h1>e-Estonia: Open data and API access</h1>
+      <span class="updated">Updated Oct 7, 2026</span>
+    </div>
     <p class="lede">Two live research tools, not slideshows — every tile is colored by real, independently verified data. One maps the entire state open-data catalogue; the other maps one account's actual reach into the personal-data API behind eesti.ee. <strong>Pick a door.</strong></p>
   </header>
 
