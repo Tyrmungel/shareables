@@ -6,10 +6,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Schibsted+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a small field of 46 tiles (one per endpoint), coloured by live/needs-params/unresolved; legend + findings beside/below; a category breakdown below that; Browse is a second tab. Mirrors the sibling Estonian Open Data Atlas's token system for a future merge. */
+/* Layout: a small field of 46 tiles (one per endpoint), coloured by live/unresolved; legend + findings beside/below; a category breakdown below that; Browse is a second tab. Mirrors the sibling Estonian Open Data Atlas's token system for a future merge. */
 :root{
   --paper:#eef2f1; --surface:#ffffff; --ink:#0f1d24; --muted:#566a72; --line:#d3dcdc; --accent:#0072ce; --accent-soft:#dbe9f6;
-  --ok:#1f9a8a; --ok-soft:#dcf0ec; --warn:#e09a0c; --warn-soft:#faecd2; --bad:#d9534f; --bad-soft:#fae0df;
+  --ok:#1f9a8a; --ok-soft:#dcf0ec; --bad:#d9534f; --bad-soft:#fae0df;
   --wip:#8a3aa3; --wip-soft:#f1def5;
   --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --font-body:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
@@ -18,11 +18,11 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
-  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --ok:#34bfae; --ok-soft:#163832; --bad:#e5675f; --bad-soft:#3a1f1d;
   --wip:#d9a6e6; --wip-soft:#3a2440; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
-  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --ok:#34bfae; --ok-soft:#163832; --bad:#e5675f; --bad-soft:#3a1f1d;
   --wip:#d9a6e6; --wip-soft:#3a2440; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font:16px/1.55 var(--font-body);padding-inline:20px;padding-block:0 64px;-webkit-font-smoothing:antialiased}
@@ -83,7 +83,7 @@ h2{font:700 clamp(22px,2.6vw,28px)/1.15 var(--font-display);letter-spacing:-.015
 .legend.focused .lg[aria-pressed="false"]:not(.lg-all){opacity:.45}
 .lg-all{font-weight:600;border-bottom:1px solid var(--line);border-radius:8px 8px 0 0;margin-bottom:4px;padding-bottom:10px}
 .lg-all .n{color:var(--ink);font-weight:600}
-.sw-all{background:conic-gradient(var(--ok) 0 70%,var(--warn) 0 96%,var(--bad) 0)}
+.sw-all{background:conic-gradient(var(--ok) 0 96%,var(--bad) 0)}
 .sw{width:14px;height:14px;border-radius:3px;transition:transform .25s var(--ease);flex:none}
 .lg:hover .sw{transform:scale(1.18) rotate(-6deg)}
 .lg .n{font:500 15px var(--font-body);font-variant-numeric:tabular-nums;color:var(--muted)}
@@ -133,7 +133,6 @@ input[type=search]:focus,select:focus{outline:none;border-color:var(--accent);bo
 .row .meta .cat{color:var(--ink);font-weight:500}
 .st{font-weight:600;border-radius:999px;padding:2px 10px;font-size:12.5px}
 .st-ok{color:var(--ok);background:var(--ok-soft)}
-.st-warn{color:var(--warn);background:var(--warn-soft)}
 .st-bad{color:var(--bad);background:var(--bad-soft)}
 .row .note{color:var(--muted);font-size:14px;margin-top:6px}
 .empty{padding:36px 4px;color:var(--muted)}
@@ -208,29 +207,24 @@ footer{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);color:v
 
   <footer>
     <span>Source: <strong>riik-mcp</strong>, a personal CLI + Claude MCP plugin reading my own eesti.ee / ee.ria.eesti.app account data via Smart-ID. Own account only, read-only, 46 GET endpoints — no mutations, no acting for someone else, no business-portal area.</span>
-    <span>Live-verified 2026-10-06 against a real Smart-ID login. <strong>Live</strong>: returns real data as documented. <strong>Needs params</strong>: confirmed reachable, but expects query parameters (a date range, a case reference, a code list) this minimal client deliberately doesn't send. <strong>Unresolved</strong>: no working path or method found (e‑certificates 404s; qr‑documents 405s on GET).</span>
+    <span>Live-verified 2026-10-06, query parameters completed and re-verified 2026-10-07, against a real Smart-ID login. <strong>Live</strong>: returns real data as documented — 12 of these need an optional CLI flag (a date range, a code list, a size cap) the client now sends. <strong>Unresolved</strong>: no working path or method found (e‑certificates 404s; qr‑documents 405s on GET).</span>
   </footer>
 </div>
 
-<script id="data" type="application/json">{"status":["Live","Needs params","Unresolved"],"cats":["Session/misc","Consent","Health","Vehicles/driving","Land/real estate","Pensions (KPR)","Inheritance/notary","Firearms/hunting","Education","Debt/enforcement","Identity documents/photo","Mailbox (pk2)","QR document display"],"rows":[[0,0,"profile","/authenticator/token/v1/userinfo",""],[0,0,"supported-version","/api/app/v1/supported-version",""],[0,0,"data-systems","/api/andmejalgija/v1/data-systems",""],[1,0,"data-usages","/api/andmejalgija/v1/usages","needs dataSystemCodes"],[1,1,"consent","/api/consent/v1/consent-snapshot","needs statuses"],[1,1,"consent-requests","/api/consent/v1/consent-request","needs consentGroupReference"],[0,1,"consent-children","/api/consent/v1/children",""],[0,2,"health-info","/api/haigekassa/v1/kodanik/info",""],[0,2,"health-account","/api/haigekassa/v1/kodanik/konto",""],[1,2,"prescriptions","/api/haigekassa/v1/kodanik/retseptide_loetelu","needs search criteria"],[0,2,"health-insurances","/api/haigekassa/v1/kodanik/kindlustused_loetelu","empty body if none"],[0,2,"ehic-cards","/api/haigekassa/v1/kodanik/euroopa_ravikindlustuskaart_loetelu",""],[0,2,"dental-benefit-balance","/api/haigekassa/v1/kodanik/hambaravi_jaak",""],[0,2,"denture-benefit-balance","/api/haigekassa/v1/kodanik/proteesiravi_jaak",""],[1,2,"sick-leave-certificates","/api/haigekassa/v1/kodanik/tvl_loetelu","needs search criteria"],[0,2,"health-certificates","/api/digilugu/v1/kodanik/tervisetoendid",""],[0,2,"incapacity-certificate","/api/v1/tkis/kodanik/tvhtoend",""],[0,3,"driving-licences","/api/liiklusregister/v1/kodanik/juhilubade_loetelu",""],[0,3,"vehicles","/api/liiklusregister/v1/kodanik/soidukite_loetelu","no VIN field"],[0,3,"watercraft","/api/liiklusregister/v1/kodanik/veesoidukite_loetelu",""],[0,3,"uninsured-vehicles","/api/lkf/v1/kodanik/lepinguta_soidukid","empty body if none"],[1,4,"properties","/api/kinnistusraamat/v1/kodanik/kinnistud_loetelu","needs search criteria"],[1,4,"land-registry-applications","/api/kinnistusraamat/v1/kodanik/kinnistamisavaldused_loetelu","needs search criteria"],[1,4,"affected-party-notices","/api/kinnistusraamat/v1/kodanik/puudutatud_isiku_teated","needs search criteria"],[0,5,"pension-account","/api/kpr/v1/kodanik/kogumispension",""],[0,5,"pension-applications","/api/kpr/v1/kodanik/kogumispensioni_avaldused",""],[0,5,"pension-statement-pillar2","/api/kpr/v1/kodanik/pensionikonto_seis_2_sammas",""],[1,5,"pension-transactions","/api/kpr/v1/kodanik/tehingute_ulevaade","needs search criteria"],[0,6,"inheritance-register-data","/api/parimisregister/v1/kodanik/minu_parimisregistri_andmed",""],[0,6,"notary-transactions","/api/notar/v2/kodanik/tehingute_loetelu",""],[1,7,"weapons","/api/relvaregister/v1/kodanik/relvade_loetelu","needs search criteria"],[1,7,"weapon-permits","/api/relvaregister/v1/kodanik/relvalubade_loetelu","needs search criteria"],[0,8,"education-info","/api/ehis/v1/kodanik/info",""],[0,8,"graduation-certificate","/api/ehis/v1/kodanik/loputunnistus",""],[2,8,"e-certificates","/api/eis/v1/kodanik/e_tunnistus","404s live, path unresolved"],[0,8,"language-exam-data","/api/eis/v1/kodanik/eesti_keele_tasemeeksami_andmed",""],[0,8,"citizenship-exam-data","/api/eis/v1/kodanik/kodakondsuseksamid",""],[0,8,"exam-sessions","/api/eis/v1/kodanik/test_sessioonid",""],[1,9,"child-support-debt","/api/tarn/v1/kodanik/elatisvolgnevus","needs personalCode/name/DOB"],[0,9,"enforcement-case-files","/api/tarn/v1/kodanik/toimikud",""],[0,10,"id-photo","/api/politsei_ja_piirivalveamet/v1/kodanik/pilt","base64 JPEG"],[0,10,"documents-list","/api/politsei_ja_piirivalveamet/v2/kodanik/dokumendite_loetelu",""],[0,11,"mailbox-notifications","/api/pk2/v1/notification/list",""],[0,11,"mailbox-contacts","/api/pk2/v1/contacts",""],[0,11,"mailbox-owners","/api/pk2/v2/owners",""],[2,12,"qr-documents","/api/qr/v1/documents","405 live, GET unsupported"]]}</script>
+<script id="data" type="application/json">{"status":["Live","Unresolved"],"cats":["Session/misc","Consent","Health","Vehicles/driving","Land/real estate","Pensions (KPR)","Inheritance/notary","Firearms/hunting","Education","Debt/enforcement","Identity documents/photo","Mailbox (pk2)","QR document display"],"rows":[[0,0,"profile","/authenticator/token/v1/userinfo",""],[0,0,"supported-version","/api/app/v1/supported-version",""],[0,0,"data-systems","/api/andmejalgija/v1/data-systems",""],[0,0,"data-usages","/api/andmejalgija/v1/usages","--data-system-codes (repeatable)"],[0,1,"consent","/api/consent/v1/consent-snapshot","--statuses (repeatable)"],[0,1,"consent-requests","/api/consent/v1/consent-request","--consent-group-reference"],[0,1,"consent-children","/api/consent/v1/children",""],[0,2,"health-info","/api/haigekassa/v1/kodanik/info",""],[0,2,"health-account","/api/haigekassa/v1/kodanik/konto",""],[0,2,"prescriptions","/api/haigekassa/v1/kodanik/retseptide_loetelu","--from-date --to-date --size"],[0,2,"health-insurances","/api/haigekassa/v1/kodanik/kindlustused_loetelu","empty body if none"],[0,2,"ehic-cards","/api/haigekassa/v1/kodanik/euroopa_ravikindlustuskaart_loetelu",""],[0,2,"dental-benefit-balance","/api/haigekassa/v1/kodanik/hambaravi_jaak",""],[0,2,"denture-benefit-balance","/api/haigekassa/v1/kodanik/proteesiravi_jaak",""],[0,2,"sick-leave-certificates","/api/haigekassa/v1/kodanik/tvl_loetelu","--from-date --to-date --size"],[0,2,"health-certificates","/api/digilugu/v1/kodanik/tervisetoendid",""],[0,2,"incapacity-certificate","/api/v1/tkis/kodanik/tvhtoend",""],[0,3,"driving-licences","/api/liiklusregister/v1/kodanik/juhilubade_loetelu",""],[0,3,"vehicles","/api/liiklusregister/v1/kodanik/soidukite_loetelu","no VIN field"],[0,3,"watercraft","/api/liiklusregister/v1/kodanik/veesoidukite_loetelu",""],[0,3,"uninsured-vehicles","/api/lkf/v1/kodanik/lepinguta_soidukid","empty body if none"],[0,4,"properties","/api/kinnistusraamat/v1/kodanik/kinnistud_loetelu","--size"],[0,4,"land-registry-applications","/api/kinnistusraamat/v1/kodanik/kinnistamisavaldused_loetelu","--size"],[0,4,"affected-party-notices","/api/kinnistusraamat/v1/kodanik/puudutatud_isiku_teated","--size"],[0,5,"pension-account","/api/kpr/v1/kodanik/kogumispension",""],[0,5,"pension-applications","/api/kpr/v1/kodanik/kogumispensioni_avaldused",""],[0,5,"pension-statement-pillar2","/api/kpr/v1/kodanik/pensionikonto_seis_2_sammas",""],[0,5,"pension-transactions","/api/kpr/v1/kodanik/tehingute_ulevaade","--from-date --to-date"],[0,6,"inheritance-register-data","/api/parimisregister/v1/kodanik/minu_parimisregistri_andmed",""],[0,6,"notary-transactions","/api/notar/v2/kodanik/tehingute_loetelu",""],[0,7,"weapons","/api/relvaregister/v1/kodanik/relvade_loetelu","--size"],[0,7,"weapon-permits","/api/relvaregister/v1/kodanik/relvalubade_loetelu","--size"],[0,8,"education-info","/api/ehis/v1/kodanik/info",""],[0,8,"graduation-certificate","/api/ehis/v1/kodanik/loputunnistus",""],[1,8,"e-certificates","/api/eis/v1/kodanik/e_tunnistus","404s live, path unresolved"],[0,8,"language-exam-data","/api/eis/v1/kodanik/eesti_keele_tasemeeksami_andmed",""],[0,8,"citizenship-exam-data","/api/eis/v1/kodanik/kodakondsuseksamid",""],[0,8,"exam-sessions","/api/eis/v1/kodanik/test_sessioonid",""],[0,9,"child-support-debt","/api/tarn/v1/kodanik/elatisvolgnevus","--personal-code"],[0,9,"enforcement-case-files","/api/tarn/v1/kodanik/toimikud",""],[0,10,"id-photo","/api/politsei_ja_piirivalveamet/v1/kodanik/pilt","base64 JPEG"],[0,10,"documents-list","/api/politsei_ja_piirivalveamet/v2/kodanik/dokumendite_loetelu",""],[0,11,"mailbox-notifications","/api/pk2/v1/notification/list",""],[0,11,"mailbox-contacts","/api/pk2/v1/contacts",""],[0,11,"mailbox-owners","/api/pk2/v2/owners",""],[1,12,"qr-documents","/api/qr/v1/documents","405 live, GET unsupported"]]}</script>
 <script>
 const D=JSON.parse(document.getElementById('data').textContent);
 const STATUS=D.status,CATS=D.cats,R=D.rows,total=R.length;
-const NOTE=[
-  "Returns real data today with just a bearer token — no extra wiring needed.",
-  "Confirmed reachable, but the service expects query parameters (a date range, a case reference, a code list) this read-only client doesn't send. Out of scope by design, not a bug.",
-  "No working path or method was ever found for this one, despite trying documented and inferred variants."
-];
 const fmtN=n=>n.toLocaleString('en-US');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const statusCount=STATUS.map((_,i)=>R.filter(r=>r[0]===i).length);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let COL=[];
-function readColors(){const cs=getComputedStyle(document.documentElement);COL=['--ok','--warn','--bad'].map(v=>cs.getPropertyValue(v).trim())}
+function readColors(){const cs=getComputedStyle(document.documentElement);COL=['--ok','--bad'].map(v=>cs.getPropertyValue(v).trim())}
 readColors();
-const cvar=i=>`var(${['--ok','--warn','--bad'][i]})`;
-const STCLS=['st-ok','st-warn','st-bad'];
+const cvar=i=>`var(${['--ok','--bad'][i]})`;
+const STCLS=['st-ok','st-bad'];
 
 /* field */
 const order=R.map((r,i)=>i).sort((a,b)=>R[a][0]-R[b][0]||R[a][1]-R[b][1]||R[a][2].localeCompare(R[b][2]));
@@ -305,9 +299,8 @@ function countUp(){const els=[...document.querySelectorAll('[data-n]')];const t0
 /* findings */
 const pct=n=>Math.round(n/total*100);
 document.getElementById('findings').innerHTML=[
-  [statusCount[0],'',`<strong>live</strong> today — real data back from one GET with a bearer token, ${pct(statusCount[0])}% of the surface.`],
-  [statusCount[1],'',`more are <strong>reachable but parameterised</strong>: they 400 without a date range, case reference or code list this read-only client doesn't send.`],
-  [statusCount[2],'',`couldn't be <strong>resolved</strong> at all: e‑certificates 404s, qr‑documents 405s on GET.`],
+  [statusCount[0],'',`<strong>live</strong> today — real data back from a bearer-token GET, with the right query parameters (a date range, a code list, a size cap) for the dozen that need them. ${pct(statusCount[0])}% of the surface.`],
+  [statusCount[1],'',`couldn't be <strong>resolved</strong> at all: e‑certificates 404s, qr‑documents 405s on GET.`],
   [CATS.length,'',`<strong>categories</strong>, from health and vehicles to pensions, inheritance, firearms and QR document display.`]
 ].map(([n,s,p])=>`<div class="finding"><div class="big"><span data-n="${n}">0</span>${s?`<small>${s}</small>`:''}</div><p>${p}</p></div>`).join('');
 

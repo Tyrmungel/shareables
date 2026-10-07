@@ -8,7 +8,7 @@
 <style>
 :root{
   --paper:#eef2f1; --surface:#ffffff; --ink:#0f1d24; --muted:#566a72; --line:#d3dcdc; --accent:#0072ce; --accent-soft:#dbe9f6;
-  --ok:#1f9a8a; --ok-soft:#dcf0ec; --warn:#e09a0c; --warn-soft:#faecd2; --bad:#d9534f; --bad-soft:#fae0df;
+  --ok:#1f9a8a; --ok-soft:#dcf0ec; --bad:#d9534f; --bad-soft:#fae0df;
   --wip:#8a3aa3; --wip-soft:#f1def5;
   --t0:#e09a0c; --t1:#1f9a8a; --t2:#3f9d5a; --t4:#3d6fb0; --t5:#b072b8; --t6:#a3afb4; --t8:#d9534f; --t10:#7cc4d8; --t11:#c97b2e;
   --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
@@ -18,12 +18,12 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
-  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --ok:#34bfae; --ok-soft:#163832; --bad:#e5675f; --bad-soft:#3a1f1d;
   --wip:#d9a6e6; --wip-soft:#3a2440;
   --t0:#f5b83d; --t1:#34bfae; --t2:#5cc27a; --t4:#5b8fd6; --t5:#c48bd0; --t6:#5d6b71; --t8:#e5675f; --t10:#4f9db3; --t11:#d98f45; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#0d1519; --surface:#142026; --ink:#e4ecee; --muted:#8fa3aa; --line:#24343b; --accent:#4da3ff; --accent-soft:#16304a;
-  --ok:#34bfae; --ok-soft:#163832; --warn:#f5b83d; --warn-soft:#3a2d12; --bad:#e5675f; --bad-soft:#3a1f1d;
+  --ok:#34bfae; --ok-soft:#163832; --bad:#e5675f; --bad-soft:#3a1f1d;
   --wip:#d9a6e6; --wip-soft:#3a2440;
   --t0:#f5b83d; --t1:#34bfae; --t2:#5cc27a; --t4:#5b8fd6; --t5:#c48bd0; --t6:#5d6b71; --t8:#e5675f; --t10:#4f9db3; --t11:#d98f45; color-scheme:dark}
 
@@ -91,12 +91,12 @@ footer a:hover{color:var(--ink)}
     </a>
     <a class="card" href="api-access-map.html">
       <div class="mosaic">
-        <div class="field" id="api-field" role="img" aria-label="46 endpoint tiles: 32 live, 12 need parameters, 2 unresolved"></div>
+        <div class="field" id="api-field" role="img" aria-label="46 endpoint tiles: 44 live, 2 unresolved"></div>
       </div>
       <div class="meta">
-        <div class="stat"><span class="n">46</span><div class="stat-meta"><span class="wip">API harvest in progress</span><span class="label">personal-data endpoints</span></div></div>
+        <div class="stat"><span class="n">46</span><div class="stat-meta"><span class="label">personal-data endpoints</span></div></div>
         <h2>eesti.ee API Access Map</h2>
-        <p>Every endpoint behind the state portal's gateway, live-tested with a real Smart-ID login — <strong>32 return real data with nothing more than a bearer token.</strong></p>
+        <p>Every endpoint behind the state portal's gateway, live-tested with a real Smart-ID login — <strong>44 return real data</strong>, 2 couldn't be resolved to a working path or method.</p>
         <span class="cta">Open the map <span class="arrow">→</span></span>
       </div>
     </a>
@@ -111,14 +111,14 @@ const ATLAS = [
   {c:7141, v:'--t4'},  // statistics table (PxWeb)
   {c:233,  v:'--t1'},  // map service
   {c:193,  v:'--t2'},  // file
-  {c:68,   v:'--t10'}, // download page
+  {c:103,  v:'--t10'}, // download page
   {c:61,   v:'--t11'}, // data feed
   {c:31,   v:'--t0'},  // API (queryable)
-  {c:18,   v:'--t5'},  // PDF / Word
-  {c:693,  v:'--t6'},  // web page
-  {c:77,   v:'--t8'}   // no data link
+  {c:20,   v:'--t5'},  // PDF / Word
+  {c:661,  v:'--t6'},  // web page
+  {c:72,   v:'--t8'}   // no data link
 ];
-const API_STATUS = [{c:32,v:'--ok'},{c:12,v:'--warn'},{c:2,v:'--bad'}];
+const API_STATUS = [{c:44,v:'--ok'},{c:2,v:'--bad'}];
 
 function apportion(items, cells){
   const sum = items.reduce((a,x)=>a+x.c,0);
